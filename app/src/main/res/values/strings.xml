@@ -3,4 +3,7 @@
 
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="login">Login</string>
+    <string name="friends_async">Friends Async</string>
+    <string name="friends">Friends</string>
 </resources>
