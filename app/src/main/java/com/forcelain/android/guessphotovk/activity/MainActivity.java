@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -56,23 +55,23 @@ public class MainActivity extends ActionBarActivity {
 
     @OnClick(R.id.button_friends)
     void onFirendsClicked() {
-        Observable.create(new Observable.OnSubscribe<List<Integer>>() {
+        Observable.create(new Observable.OnSubscribe<List<FriendListEntity.UserEntity>>() {
             @Override
-            public void call(Subscriber<? super List<Integer>> subscriber) {
+            public void call(Subscriber<? super List<FriendListEntity.UserEntity>> subscriber) {
                 subscriber.onNext(getFriends());
                 subscriber.onCompleted();
             }
         })
-        .map(new Func1<List<Integer>, Integer>() {
+        .map(new Func1<List<FriendListEntity.UserEntity>, FriendListEntity.UserEntity>() {
             @Override
-            public Integer call(List<Integer> list) {
+            public FriendListEntity.UserEntity call(List<FriendListEntity.UserEntity> list) {
                 return list.get(new Random().nextInt(list.size()));
             }
         })
-        .map(new Func1<Integer, List<PhotoListEntity.PhotoEntity>>() {
+        .map(new Func1<FriendListEntity.UserEntity, List<PhotoListEntity.PhotoEntity>>() {
             @Override
-            public List<PhotoListEntity.PhotoEntity> call(Integer integer) {
-                return getPhotoList(integer);
+            public List<PhotoListEntity.PhotoEntity> call(FriendListEntity.UserEntity userEntity) {
+                return getPhotoList(userEntity.id);
             }
         })
         .map(new Func1<List<PhotoListEntity.PhotoEntity>, PhotoListEntity.PhotoEntity>() {
@@ -139,11 +138,21 @@ public class MainActivity extends ActionBarActivity {
         return result;
     }
 
-    private List<Integer> getFriends() {
-        List<Integer> result = null;
+    private List<FriendListEntity.UserEntity> getFriends() {
+
+        List<FriendListEntity.UserEntity> result = null;
+
         String accessToken = VKAccessToken.currentToken().accessToken;
 
-        String url = "https://api.vk.com/method/friends.get?access_token=" + accessToken;
+        String url = new Uri.Builder()
+                .scheme("https")
+                .authority("api.vk.com")
+                .appendPath("method")
+                .appendPath("friends.get")
+                .appendQueryParameter("access_token", accessToken)
+                .appendQueryParameter("fields", "nickname")
+                .appendQueryParameter("v", "5.35").build().toString();
+
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
@@ -152,7 +161,7 @@ public class MainActivity extends ActionBarActivity {
         try {
             Response response = client.newCall(request).execute();
             FriendListEntity friendListEntity = new Gson().fromJson(response.body().charStream(), FriendListEntity.class);
-            result = friendListEntity.response;
+            result = friendListEntity.response.items;
         } catch (IOException e) {
             e.printStackTrace();
         }
