@@ -34,4 +34,10 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/button_friends"/>
 
+    <ImageView
+        android:id="@+id/image_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_friends"/>
+
 </RelativeLayout>
