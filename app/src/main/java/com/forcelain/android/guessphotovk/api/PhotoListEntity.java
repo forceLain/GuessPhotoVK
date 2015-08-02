@@ -9,13 +9,4 @@ public class PhotoListEntity {
         public List<PhotoEntity> items;
     }
 
-    public class PhotoEntity {
-        public List<PhotoSizeEntity> sizes;
-    }
-
-    public class PhotoSizeEntity{
-        public String src;
-        public int width;
-        public int height;
-    }
 }
