@@ -7,32 +7,10 @@
                 android:paddingRight="@dimen/activity_horizontal_margin"
                 android:paddingTop="@dimen/activity_vertical_margin"
                 tools:context=".MainActivity">
-
     <Button
-        android:id="@+id/button_login"
+        android:id="@+id/button_go"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/login"/>
-
-    <TextView
-        android:id="@+id/text_token"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/button_login"
-        android:layout_toRightOf="@id/button_login"/>
-
-    <Button
-        android:id="@+id/button_friends"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/button_login"
-        android:text="@string/friends"/>
-
-    <TextView
-        android:id="@+id/text_friends"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/button_friends"/>
+        android:layout_height="wrap_content"/>
 
     <LinearLayout
         android:id="@+id/buttons_3_4"
@@ -88,6 +66,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/buttons_1_2"
-        android:layout_below="@id/text_friends"/>
+        android:layout_below="@id/button_go"/>
 
 </RelativeLayout>

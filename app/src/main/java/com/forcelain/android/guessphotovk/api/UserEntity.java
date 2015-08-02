@@ -2,6 +2,8 @@ package com.forcelain.android.guessphotovk.api;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 public class UserEntity {
     public int id;
 
@@ -10,4 +12,6 @@ public class UserEntity {
 
     @SerializedName("last_name")
     public String lastName;
+
+    public List<PhotoEntity> photoList;
 }

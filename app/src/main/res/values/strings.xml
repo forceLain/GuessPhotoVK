@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">GuessPhotoVK</string>
 
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
-    <string name="login">Login</string>
-    <string name="friends_async">Friends Async</string>
-    <string name="friends">Friends</string>
+    <string name="need_to_login">Вам нужно войти в свой аккаунт Вконтакте</string>
+    <string name="error_title">Ошибка</string>
+    <string name="try_again">Попробовать еще раз</string>
+    <string name="try_later">Попробовать позже</string>
+    <string name="try_login">Перезайти в ВК</string>
 </resources>
