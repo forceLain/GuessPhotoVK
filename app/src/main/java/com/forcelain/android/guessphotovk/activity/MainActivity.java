@@ -129,7 +129,8 @@ public class MainActivity extends AppCompatActivity {
         .flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
             @Override
             public Observable<UserEntity> call(UserEntity userEntity) {
-                return new Api(VKAccessToken.currentToken().accessToken).getUserAllPhotos(userEntity);
+                return new Api(VKAccessToken.currentToken().accessToken).getUserAllPhotos(userEntity)
+                        .onErrorResumeNext(Observable.just(userEntity));
             }
         })
         .map(new Func1<UserEntity, UserModel>() {
@@ -173,14 +174,14 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onCompleted() {
+                Log.d(TAG, "onCompleted");
+                //TODO Check if no onNext was called
             }
 
             @Override
             public void onError(Throwable e) {
-                if (e instanceof ApiException) {
-                    showApiExceptionDialog((ApiException) e);
-                }
                 Log.e(TAG, Log.getStackTraceString(e));
+                //TODO show error fragment
             }
 
             @Override

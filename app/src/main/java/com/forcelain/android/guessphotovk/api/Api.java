@@ -1,7 +1,6 @@
 package com.forcelain.android.guessphotovk.api;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -29,8 +28,13 @@ public class Api {
         return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
             @Override
             public void call(Subscriber<? super List<UserEntity>> subscriber) {
-                List<UserEntity> allFriends = getFriends();
-                subscriber.onNext(allFriends);
+                List<UserEntity> allFriends;
+                try {
+                    allFriends = getFriends();
+                    subscriber.onNext(allFriends);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
                 subscriber.onCompleted();
             }
         });
@@ -40,14 +44,18 @@ public class Api {
         return Observable.create(new Observable.OnSubscribe<UserEntity>() {
             @Override
             public void call(Subscriber<? super UserEntity> subscriber) {
-                userEntity.photoList = getPhotoList(userEntity.id);
-                subscriber.onNext(userEntity);
+                try {
+                    userEntity.photoList = getPhotoList(userEntity.id);
+                    subscriber.onNext(userEntity);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
                 subscriber.onCompleted();
             }
         });
     }
 
-    private List<UserEntity> getFriends() {
+    private List<UserEntity> getFriends(){
 
         List<UserEntity> result;
 
@@ -70,13 +78,12 @@ public class Api {
             }
             result = apiResponse.response.items;
         } catch (IOException|JsonParseException e) {
-            throw new RuntimeException("Unexpected friend response");
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected friend response");
         }
         return result;
     }
 
-    private @NonNull
-    List<PhotoEntity> getPhotoList(int ownerId) {
+    private List<PhotoEntity> getPhotoList(int ownerId) {
         List<PhotoEntity> result;
 
         String url = getDefaultUriBuilder()
@@ -95,9 +102,12 @@ public class Api {
             Response response = client.newCall(request).execute();
             Type type = new TypeToken<ApiResponse<PhotoListResponse>>(){}.getType();
             ApiResponse<PhotoListResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
+            if (apiResponse.error != null){
+                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+            }
             result = apiResponse.response.items;
         } catch (IOException|JsonParseException e) {
-            throw new RuntimeException("Unexpected photo response");
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected photo response");
         }
         return result;
     }
