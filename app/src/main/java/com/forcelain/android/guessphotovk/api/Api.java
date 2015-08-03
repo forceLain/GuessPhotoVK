@@ -24,6 +24,50 @@ public class Api {
         this.accessToken = accessToken;
     }
 
+    public Observable<List<GroupEntity>> getAllGroups(){
+        return Observable.create(new Observable.OnSubscribe<List<GroupEntity>>() {
+            @Override
+            public void call(Subscriber<? super List<GroupEntity>> subscriber) {
+                List<GroupEntity> allGroups;
+                try {
+                    allGroups = getGroups();
+                    subscriber.onNext(allGroups);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
+                subscriber.onCompleted();
+            }
+        });
+    }
+
+    private List<GroupEntity> getGroups() {
+        List<GroupEntity> result;
+
+        String url = getDefaultUriBuilder()
+                .appendPath("groups.get")
+                .appendQueryParameter("extended", "1")
+                .appendQueryParameter("count", "1000")
+                .build().toString();
+
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            Type type = new TypeToken<ApiResponse<GroupsResponse>>(){}.getType();
+            ApiResponse<GroupsResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
+            if (apiResponse.error != null){
+                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+            }
+            result = apiResponse.response.items;
+        } catch (IOException|JsonParseException e) {
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
+        }
+        return result;
+    }
+
     public Observable<List<UserEntity>> getAllFriends(){
         return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
             @Override
@@ -47,6 +91,21 @@ public class Api {
                 try {
                     userEntity.photoList = getPhotoList(userEntity.id);
                     subscriber.onNext(userEntity);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
+                subscriber.onCompleted();
+            }
+        });
+    }
+
+    public Observable<GroupEntity> getGroupAllPhotos(final GroupEntity groupEntity) {
+        return Observable.create(new Observable.OnSubscribe<GroupEntity>() {
+            @Override
+            public void call(Subscriber<? super GroupEntity> subscriber) {
+                try {
+                    groupEntity.photoList = getPhotoList(-groupEntity.id);
+                    subscriber.onNext(groupEntity);
                 } catch (ApiException e){
                     subscriber.onError(e);
                 }
@@ -120,5 +179,4 @@ public class Api {
                 .appendQueryParameter("v", "5.35")
                 .appendQueryParameter("access_token", accessToken);
     }
-
 }

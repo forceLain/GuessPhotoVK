@@ -11,20 +11,23 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
 
-        <meta-data android:name="com.vk.sdk.AppId" android:value="5015194" />
+        <meta-data
+            android:name="com.vk.sdk.AppId"
+            android:value="5015194"/>
 
         <activity
-            android:name=".activity.MainActivity"
-            android:label="@string/app_name">
+            android:name=".activity.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
-
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".activity.GameActivity"
+            android:label="@string/app_name">
+        </activity>
         <activity android:name="com.vk.sdk.VKOpenAuthActivity"/>
-
         <activity
             android:name="com.vk.sdk.VKServiceActivity"
             android:label="ServiceActivity"

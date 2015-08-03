@@ -6,4 +6,7 @@
     <string name="try_again">Попробовать еще раз</string>
     <string name="try_later">Попробовать позже</string>
     <string name="try_login">Перезайти в ВК</string>
+
+    <string name="friends_mode">Друзья</string>
+    <string name="groups_mode">Группы</string>
 </resources>

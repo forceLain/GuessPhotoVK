@@ -1,8 +1,7 @@
 package com.forcelain.android.guessphotovk.model;
 
-public class UserModel {
+public class VariantModel {
     public int id;
-    public String lastName;
-    public String firstName;
+    public String title;
     public String photoSrc;
 }
