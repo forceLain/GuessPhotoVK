@@ -3,7 +3,6 @@ package com.forcelain.android.guessphotovk.fragments;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,7 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public abstract class AbstractPhotoGameFragment extends Fragment {
+public abstract class AbstractPhotoGameFragment extends AbstractGameFragment {
 
     private static final long NEW_ROUND_DELAY_MS = 1000;
     @Bind(R.id.image_photo) ImageView photoView;
@@ -31,7 +30,7 @@ public abstract class AbstractPhotoGameFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_game, container, false);
+        return inflater.inflate(R.layout.fragment_photo_game, container, false);
     }
 
     @Override
@@ -59,14 +58,12 @@ public abstract class AbstractPhotoGameFragment extends Fragment {
     }
 
     @OnClick(R.id.button_go)
-    void newRound() {
-        onRoundPreparing();
-        prepareRound();
+    void onButtonGoClicked(){
+        newRound();
     }
 
-    protected abstract void prepareRound();
-
-    private void onRoundPreparing(){
+    @Override
+    protected void onRoundPreparing(){
         photoView.setImageDrawable(null);
         for (View buttonBar : buttonBars) {
             buttonBar.setVisibility(View.INVISIBLE);

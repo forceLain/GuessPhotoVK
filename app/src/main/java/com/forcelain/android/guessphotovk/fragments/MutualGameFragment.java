@@ -1,8 +1,16 @@
 package com.forcelain.android.guessphotovk.fragments;
 
 
+import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
+import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.api.Api;
 import com.forcelain.android.guessphotovk.api.PhotoEntity;
 import com.forcelain.android.guessphotovk.api.UserEntity;
@@ -16,13 +24,40 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
+import butterknife.Bind;
+import butterknife.ButterKnife;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 
-public class FriendsGameFragment extends AbstractPhotoGameFragment {
+public class MutualGameFragment extends AbstractGameFragment {
+
+    @Bind(R.id.mutual_container) View mutualContainer;
+    @Bind(R.id.variants_container) View variantsContainer;
+    @Bind(R.id.text_mutual_1) TextView mutual1TextView;
+    @Bind(R.id.text_mutual_2) TextView mutual2TextView;
+    @Bind(R.id.variant_yes) Button variantYesButton;
+    @Bind(R.id.variant_no) Button variantNoButton;
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_mutual_game, container, false);
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ButterKnife.bind(this, view);
+        newRound();
+    }
+
+    @Override
+    protected void onRoundPreparing() {
+
+    }
 
     @Override
     protected void prepareRound() {
@@ -41,7 +76,16 @@ public class FriendsGameFragment extends AbstractPhotoGameFragment {
                         return Observable.from(friendList);
                     }
                 })
-                .flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
+                .take(2)
+                .buffer(2)
+                .flatMap(new Func1<List<UserEntity>, Observable<?>>() {
+                    @Override
+                    public Observable<?> call(List<UserEntity> userEntities) {
+                        return null;
+                    }
+                });
+
+                /*.flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
                         return new Api(VKAccessToken.currentToken().accessToken).getUserAllPhotos(userEntity)
@@ -102,6 +146,11 @@ public class FriendsGameFragment extends AbstractPhotoGameFragment {
                     public void onNext(RoundModel roundModel) {
                         onRoundReady(roundModel);
                     }
-                });
+                });*/
+    }
+
+    @Override
+    protected void onRoundReady(RoundModel roundModel) {
+
     }
 }

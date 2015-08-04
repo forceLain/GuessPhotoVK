@@ -25,8 +25,6 @@ import rx.schedulers.Schedulers;
 
 public class GroupsGameFragment extends AbstractPhotoGameFragment {
 
-    private static final String TAG = "GameFragment";
-
     @Override
     protected void prepareRound() {
         new Api(VKAccessToken.currentToken().accessToken).getAllGroups()
