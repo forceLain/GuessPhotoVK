@@ -12,24 +12,25 @@ import android.widget.TextView;
 
 import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.api.Api;
-import com.forcelain.android.guessphotovk.api.PhotoEntity;
 import com.forcelain.android.guessphotovk.api.UserEntity;
-import com.forcelain.android.guessphotovk.model.RoundModel;
+import com.forcelain.android.guessphotovk.model.AbstractRoundModel;
+import com.forcelain.android.guessphotovk.model.MutualRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
 public class MutualGameFragment extends AbstractGameFragment {
@@ -54,6 +55,11 @@ public class MutualGameFragment extends AbstractGameFragment {
         newRound();
     }
 
+    @OnClick(R.id.button_go)
+    void onGoClicked(){
+        newRound();
+    }
+
     @Override
     protected void onRoundPreparing() {
 
@@ -61,7 +67,8 @@ public class MutualGameFragment extends AbstractGameFragment {
 
     @Override
     protected void prepareRound() {
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
+
+        Observable<List<UserEntity>> randomGuys = new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
                 .map(new Func1<List<UserEntity>, List<UserEntity>>() {
                     @Override
                     public List<UserEntity> call(List<UserEntity> friendList) {
@@ -77,58 +84,47 @@ public class MutualGameFragment extends AbstractGameFragment {
                     }
                 })
                 .take(2)
-                .buffer(2)
-                .flatMap(new Func1<List<UserEntity>, Observable<?>>() {
+                .buffer(2);
+
+        final Observable<List<Integer>> mutualGuys = randomGuys.
+                flatMap(new Func1<List<UserEntity>, Observable<List<Integer>>>() {
                     @Override
-                    public Observable<?> call(List<UserEntity> userEntities) {
-                        return null;
+                    public Observable<List<Integer>> call(List<UserEntity> userEntities) {
+                        return new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id);
                     }
                 });
 
-                /*.flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
+        Observable<MutualRoundModel> roundObs = Observable.zip(
+                randomGuys,
+                mutualGuys,
+                new Func2<List<UserEntity>, List<Integer>, MutualRoundModel>() {
                     @Override
-                    public Observable<UserEntity> call(UserEntity userEntity) {
-                        return new Api(VKAccessToken.currentToken().accessToken).getUserAllPhotos(userEntity)
-                                .onErrorResumeNext(Observable.just(userEntity));
-                    }
-                })
-                .map(new Func1<UserEntity, VariantModel>() {
-                    @Override
-                    public VariantModel call(UserEntity userEntity) {
-                        VariantModel variantModel = new VariantModel();
-                        variantModel.title = userEntity.firstName + " " + userEntity.lastName;
-                        variantModel.id = userEntity.id;
-
-                        if (userEntity.photoList != null && !userEntity.photoList.isEmpty()) {
-                            PhotoEntity photoEntity = userEntity.photoList.get(new Random().nextInt(userEntity.photoList.size()));
-                            variantModel.photoSrc = photoEntity.sizes.get(photoEntity.sizes.size() - 1).src;
+                    public MutualRoundModel call(List<UserEntity> randomGuys, List<Integer> mutualList) {
+                        Log.d("@@@@", "zip");
+                        MutualRoundModel mutualRoundModel = new MutualRoundModel();
+                        mutualRoundModel.targets = new ArrayList<>();
+                        for (UserEntity userEntity : randomGuys) {
+                            VariantModel model = new VariantModel();
+                            model.title = userEntity.firstName + " " + userEntity.lastName;
+                            model.id = userEntity.id;
+                            mutualRoundModel.targets.add(model);
                         }
+                        mutualRoundModel.mutuals = new ArrayList<>();
+                        for (Integer integer : mutualList) {
+                            VariantModel model = new VariantModel();
+                            model.title = String.valueOf(integer);
+                            model.id = integer;
+                            mutualRoundModel.mutuals.add(model);
+                        }
+                        return mutualRoundModel;
+                    }
+                });
 
-                        return variantModel;
-                    }
-                })
-                .filter(new Func1<VariantModel, Boolean>() {
-                    @Override
-                    public Boolean call(VariantModel variantModel) {
-                        return variantModel.photoSrc != null;
-                    }
-                })
-                .take(4)
-                .buffer(4)
-                .map(new Func1<List<VariantModel>, RoundModel>() {
-                    @Override
-                    public RoundModel call(List<VariantModel> variantModels) {
-                        RoundModel roundModel = new RoundModel();
-                        roundModel.correctAnswer = variantModels.get(0);
-                        roundModel.versions = new ArrayList<>(variantModels);
-                        Collections.shuffle(roundModel.versions);
-                        return roundModel;
-                    }
-                })
+        roundObs
                 .timeout(30, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<RoundModel>() {
+                .subscribe(new Subscriber<MutualRoundModel>() {
 
                     @Override
                     public void onCompleted() {
@@ -143,14 +139,20 @@ public class MutualGameFragment extends AbstractGameFragment {
                     }
 
                     @Override
-                    public void onNext(RoundModel roundModel) {
+                    public void onNext(MutualRoundModel roundModel) {
                         onRoundReady(roundModel);
                     }
-                });*/
+                });
     }
 
     @Override
-    protected void onRoundReady(RoundModel roundModel) {
-
+    protected void onRoundReady(AbstractRoundModel roundModel) {
+        MutualRoundModel mutualRoundModel = (MutualRoundModel) roundModel;
+        mutual1TextView.setText(mutualRoundModel.targets.get(0).title);
+        mutual2TextView.setText(mutualRoundModel.targets.get(1).title);
+        Log.d("@@@@", mutualRoundModel.targets.get(0).id + " " + mutualRoundModel.targets.get(1).id);
+        for (VariantModel mutual : mutualRoundModel.mutuals) {
+            Log.d("@@@@", mutual.title);
+        }
     }
 }

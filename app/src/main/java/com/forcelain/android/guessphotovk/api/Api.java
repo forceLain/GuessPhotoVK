@@ -24,6 +24,48 @@ public class Api {
         this.accessToken = accessToken;
     }
 
+    public Observable<List<Integer>> getMutual(final int sourceId, final int targetId){
+        return Observable.create(new Observable.OnSubscribe<List<Integer>>() {
+            @Override
+            public void call(Subscriber<? super List<Integer>> subscriber) {
+                List<Integer> mutualList;
+                try {
+                    mutualList = getMutualList(sourceId, targetId);
+                    subscriber.onNext(mutualList);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
+                subscriber.onCompleted();
+            }
+        });
+    }
+
+    private List<Integer> getMutualList(int sourceId, int targetId) {
+        String url = getDefaultUriBuilder()
+                .appendPath("friends.getMutual")
+                .appendQueryParameter("source_uid", String.valueOf(sourceId))
+                .appendQueryParameter("target_uid", String.valueOf(targetId))
+                .build().toString();
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        List<Integer> result;
+        try {
+            Response response = client.newCall(request).execute();
+            Type type = new TypeToken<ApiResponse<List<Integer>>>(){}.getType();
+            ApiResponse<List<Integer>> apiResponse = new Gson().fromJson(response.body().charStream(), type);
+            if (apiResponse.error != null){
+                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+            }
+            result = apiResponse.response;
+        } catch (IOException|JsonParseException e) {
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
+        }
+        return result;
+    }
+
     public Observable<List<GroupEntity>> getAllGroups(){
         return Observable.create(new Observable.OnSubscribe<List<GroupEntity>>() {
             @Override

@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.fragments.FriendsGameFragment;
 import com.forcelain.android.guessphotovk.fragments.GroupsGameFragment;
+import com.forcelain.android.guessphotovk.fragments.MutualGameFragment;
 
 import butterknife.ButterKnife;
 
@@ -17,6 +18,7 @@ public class GameActivity extends AppCompatActivity {
     private static final int MODE_NONE = 0;
     public static final int MODE_FRIENDS = 1;
     public static final int MODE_GROUPS = 2;
+    public static final int MODE_MUTUAL = 3;
 
     private int mode;
 
@@ -39,6 +41,9 @@ public class GameActivity extends AppCompatActivity {
                 break;
             case MODE_GROUPS:
                 replaceFragment(new GroupsGameFragment());
+                break;
+            case MODE_MUTUAL:
+                replaceFragment(new MutualGameFragment());
                 break;
             default:
                 finish();

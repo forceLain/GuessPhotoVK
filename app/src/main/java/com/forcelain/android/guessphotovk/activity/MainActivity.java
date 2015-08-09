@@ -39,6 +39,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @OnClick(R.id.button_mutual_mode)
+    void startMutualMode(){
+        Intent intent = new Intent(this, GameActivity.class);
+        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_MUTUAL);
+        startActivity(intent);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();

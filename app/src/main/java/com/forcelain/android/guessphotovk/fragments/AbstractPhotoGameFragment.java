@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.forcelain.android.guessphotovk.R;
+import com.forcelain.android.guessphotovk.model.AbstractRoundModel;
 import com.forcelain.android.guessphotovk.model.RoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.squareup.picasso.Callback;
@@ -70,7 +71,9 @@ public abstract class AbstractPhotoGameFragment extends AbstractGameFragment {
         }
     }
 
-    protected void onRoundReady(final RoundModel roundModel) {
+    @Override
+    protected void onRoundReady(final AbstractRoundModel abstractRoundModel) {
+        final RoundModel roundModel = (RoundModel) abstractRoundModel;
 
         Picasso.with(getActivity()).load(roundModel.correctAnswer.photoSrc).into(photoView, new Callback() {
             @Override

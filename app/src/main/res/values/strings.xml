@@ -11,4 +11,5 @@
     <string name="groups_mode">Группы</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="mutual_mode">Mutual</string>
 </resources>
