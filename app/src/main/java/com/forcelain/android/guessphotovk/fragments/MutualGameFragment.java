@@ -68,7 +68,7 @@ public class MutualGameFragment extends AbstractGameFragment {
     @Override
     protected void prepareRound() {
 
-        Observable<List<UserEntity>> randomGuys = new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
+        new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
                 .map(new Func1<List<UserEntity>, List<UserEntity>>() {
                     @Override
                     public List<UserEntity> call(List<UserEntity> friendList) {
@@ -84,43 +84,37 @@ public class MutualGameFragment extends AbstractGameFragment {
                     }
                 })
                 .take(2)
-                .buffer(2);
-
-        final Observable<List<Integer>> mutualGuys = randomGuys.
-                flatMap(new Func1<List<UserEntity>, Observable<List<Integer>>>() {
+                .buffer(2)
+                .flatMap(new Func1<List<UserEntity>, Observable<MutualRoundModel>>() {
                     @Override
-                    public Observable<List<Integer>> call(List<UserEntity> userEntities) {
-                        return new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id);
-                    }
-                });
+                    public Observable<MutualRoundModel> call(List<UserEntity> userEntities) {
 
-        Observable<MutualRoundModel> roundObs = Observable.zip(
-                randomGuys,
-                mutualGuys,
-                new Func2<List<UserEntity>, List<Integer>, MutualRoundModel>() {
-                    @Override
-                    public MutualRoundModel call(List<UserEntity> randomGuys, List<Integer> mutualList) {
-                        Log.d("@@@@", "zip");
-                        MutualRoundModel mutualRoundModel = new MutualRoundModel();
-                        mutualRoundModel.targets = new ArrayList<>();
-                        for (UserEntity userEntity : randomGuys) {
-                            VariantModel model = new VariantModel();
-                            model.title = userEntity.firstName + " " + userEntity.lastName;
-                            model.id = userEntity.id;
-                            mutualRoundModel.targets.add(model);
-                        }
-                        mutualRoundModel.mutuals = new ArrayList<>();
-                        for (Integer integer : mutualList) {
-                            VariantModel model = new VariantModel();
-                            model.title = String.valueOf(integer);
-                            model.id = integer;
-                            mutualRoundModel.mutuals.add(model);
-                        }
-                        return mutualRoundModel;
-                    }
-                });
+                        Observable<List<Integer>> mutualObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id);
+                        Observable<List<UserEntity>> randomGuysObs = Observable.just(userEntities);
 
-        roundObs
+                        return Observable.zip(mutualObs, randomGuysObs, new Func2<List<Integer>, List<UserEntity>, MutualRoundModel>() {
+                            @Override
+                            public MutualRoundModel call(List<Integer> mutualList, List<UserEntity> randomGuys) {
+                                MutualRoundModel mutualRoundModel = new MutualRoundModel();
+                                mutualRoundModel.targets = new ArrayList<>();
+                                for (UserEntity userEntity : randomGuys) {
+                                    VariantModel model = new VariantModel();
+                                    model.title = userEntity.firstName + " " + userEntity.lastName;
+                                    model.id = userEntity.id;
+                                    mutualRoundModel.targets.add(model);
+                                }
+                                mutualRoundModel.mutuals = new ArrayList<>();
+                                for (Integer integer : mutualList) {
+                                    VariantModel model = new VariantModel();
+                                    model.title = String.valueOf(integer);
+                                    model.id = integer;
+                                    mutualRoundModel.mutuals.add(model);
+                                }
+                                return mutualRoundModel;
+                            }
+                        });
+                    }
+                })
                 .timeout(30, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
