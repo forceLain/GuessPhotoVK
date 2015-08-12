@@ -98,11 +98,17 @@ public class MutualGameFragment extends AbstractGameFragment {
                     public Observable<MutualRoundModel> call(List<UserEntity> userEntities) {
 
                         Observable<List<Integer>> mutualObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id);
+                        Observable<List<UserEntity>> flatMap = mutualObs.flatMap(new Func1<List<Integer>, Observable<List<UserEntity>>>() {
+                            @Override
+                            public Observable<List<UserEntity>> call(List<Integer> integers) {
+                                return new Api(VKAccessToken.currentToken().accessToken).getUsers(integers);
+                            }
+                        });
                         Observable<List<UserEntity>> randomGuysObs = Observable.just(userEntities);
 
-                        return Observable.zip(mutualObs, randomGuysObs, new Func2<List<Integer>, List<UserEntity>, MutualRoundModel>() {
+                        return Observable.zip(flatMap, randomGuysObs, new Func2<List<UserEntity>, List<UserEntity>, MutualRoundModel>() {
                             @Override
-                            public MutualRoundModel call(List<Integer> mutualList, List<UserEntity> randomGuys) {
+                            public MutualRoundModel call(List<UserEntity> mutualList, List<UserEntity> randomGuys) {
                                 MutualRoundModel mutualRoundModel = new MutualRoundModel();
                                 mutualRoundModel.targets = new ArrayList<>();
                                 for (UserEntity userEntity : randomGuys) {
@@ -112,10 +118,10 @@ public class MutualGameFragment extends AbstractGameFragment {
                                     mutualRoundModel.targets.add(model);
                                 }
                                 mutualRoundModel.mutuals = new ArrayList<>();
-                                for (Integer integer : mutualList) {
+                                for (UserEntity userEntity : mutualList) {
                                     VariantModel model = new VariantModel();
-                                    model.title = String.valueOf(integer);
-                                    model.id = integer;
+                                    model.title = userEntity.firstName + " " + userEntity.lastName;
+                                    model.id = userEntity.id;
                                     mutualRoundModel.mutuals.add(model);
                                 }
                                 return mutualRoundModel;

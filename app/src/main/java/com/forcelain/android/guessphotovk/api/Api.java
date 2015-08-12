@@ -1,6 +1,7 @@
 package com.forcelain.android.guessphotovk.api;
 
 import android.net.Uri;
+import android.text.TextUtils;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
@@ -22,6 +23,47 @@ public class Api {
 
     public Api(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public Observable<List<UserEntity>> getUsers(final Iterable<Integer> ids){
+        return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
+            @Override
+            public void call(Subscriber<? super List<UserEntity>> subscriber) {
+                List<UserEntity> userList;
+                try {
+                    userList = getUserList(ids);
+                    subscriber.onNext(userList);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
+                subscriber.onCompleted();
+            }
+        });
+    }
+
+    private List<UserEntity> getUserList(final Iterable<Integer> ids) {
+        String url = getDefaultUriBuilder()
+                .appendPath("users.get")
+                .appendQueryParameter("user_ids", TextUtils.join(",", ids))
+                .build().toString();
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        List<UserEntity> result;
+        try {
+            Response response = client.newCall(request).execute();
+            Type type = new TypeToken<ApiResponse<List<UserEntity>>>(){}.getType();
+            ApiResponse<List<UserEntity>> apiResponse = new Gson().fromJson(response.body().charStream(), type);
+            if (apiResponse.error != null){
+                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+            }
+            result = apiResponse.response;
+        } catch (IOException|JsonParseException e) {
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
+        }
+        return result;
     }
 
     public Observable<List<Integer>> getMutual(final int sourceId, final int targetId){
