@@ -10,7 +10,7 @@ public abstract class AbstractGameFragment extends Fragment {
 
     protected static final String TAG = "GameFragment";
 
-    private static final long NEW_ROUND_DELAY_MS = 1000;
+    protected static final long NEW_ROUND_DELAY_MS = 1000;
 
     protected void newRound() {
         onRoundPreparing();

@@ -1,6 +1,7 @@
 package com.forcelain.android.guessphotovk.fragments;
 
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -60,9 +61,16 @@ public class MutualGameFragment extends AbstractGameFragment {
         newRound();
     }
 
+    @OnClick({R.id.variant_yes, R.id.variant_no})
+    void onVariantClicked(Button button){
+        Boolean correct = (Boolean) button.getTag();
+        button.setTextColor(correct ? Color.GREEN : Color.RED);
+    }
+
     @Override
     protected void onRoundPreparing() {
-
+        variantYesButton.setTextColor(Color.BLUE);
+        variantNoButton.setTextColor(Color.BLUE);
     }
 
     @Override
@@ -148,5 +156,8 @@ public class MutualGameFragment extends AbstractGameFragment {
         for (VariantModel mutual : mutualRoundModel.mutuals) {
             Log.d("@@@@", mutual.title);
         }
+        boolean haveMutuals = mutualRoundModel.mutuals.size() > 1;
+        variantYesButton.setTag(haveMutuals);
+        variantNoButton.setTag(!haveMutuals);
     }
 }
