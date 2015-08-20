@@ -8,7 +8,9 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.TextView;
 
 import com.forcelain.android.guessphotovk.R;
@@ -36,12 +38,14 @@ import rx.schedulers.Schedulers;
 
 public class MutualGameFragment extends AbstractGameFragment {
 
+    @Bind(R.id.list) ListView commonFriendsList;
     @Bind(R.id.mutual_container) View mutualContainer;
     @Bind(R.id.variants_container) View variantsContainer;
     @Bind(R.id.text_mutual_1) TextView mutual1TextView;
     @Bind(R.id.text_mutual_2) TextView mutual2TextView;
     @Bind(R.id.variant_yes) Button variantYesButton;
     @Bind(R.id.variant_no) Button variantNoButton;
+    private CommonFriendsAdapter adapter;
 
     @Nullable
     @Override
@@ -53,6 +57,8 @@ public class MutualGameFragment extends AbstractGameFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         ButterKnife.bind(this, view);
+        adapter = new CommonFriendsAdapter();
+        commonFriendsList.setAdapter(adapter);
         newRound();
     }
 
@@ -65,12 +71,14 @@ public class MutualGameFragment extends AbstractGameFragment {
     void onVariantClicked(Button button){
         Boolean correct = (Boolean) button.getTag();
         button.setTextColor(correct ? Color.GREEN : Color.RED);
+        commonFriendsList.setVisibility(View.VISIBLE);
     }
 
     @Override
     protected void onRoundPreparing() {
         variantYesButton.setTextColor(Color.BLUE);
         variantNoButton.setTextColor(Color.BLUE);
+        commonFriendsList.setVisibility(View.GONE);
     }
 
     @Override
@@ -96,19 +104,19 @@ public class MutualGameFragment extends AbstractGameFragment {
                 .flatMap(new Func1<List<UserEntity>, Observable<MutualRoundModel>>() {
                     @Override
                     public Observable<MutualRoundModel> call(List<UserEntity> userEntities) {
-
-                        Observable<List<Integer>> mutualObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id);
-                        Observable<List<UserEntity>> flatMap = mutualObs.flatMap(new Func1<List<Integer>, Observable<List<UserEntity>>>() {
-                            @Override
-                            public Observable<List<UserEntity>> call(List<Integer> integers) {
-                                return new Api(VKAccessToken.currentToken().accessToken).getUsers(integers);
-                            }
-                        });
                         Observable<List<UserEntity>> randomGuysObs = Observable.just(userEntities);
 
-                        return Observable.zip(flatMap, randomGuysObs, new Func2<List<UserEntity>, List<UserEntity>, MutualRoundModel>() {
+                        Observable<List<UserEntity>> commonFriendsObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id)
+                                .flatMap(new Func1<List<Integer>, Observable<List<UserEntity>>>() {
+                                    @Override
+                                    public Observable<List<UserEntity>> call(List<Integer> integers) {
+                                        return new Api(VKAccessToken.currentToken().accessToken).getUsers(integers);
+                                    }
+                                });
+
+                        return Observable.zip(commonFriendsObs, randomGuysObs, new Func2<List<UserEntity>, List<UserEntity>, MutualRoundModel>() {
                             @Override
-                            public MutualRoundModel call(List<UserEntity> mutualList, List<UserEntity> randomGuys) {
+                            public MutualRoundModel call(List<UserEntity> commonFriends, List<UserEntity> randomGuys) {
                                 MutualRoundModel mutualRoundModel = new MutualRoundModel();
                                 mutualRoundModel.targets = new ArrayList<>();
                                 for (UserEntity userEntity : randomGuys) {
@@ -118,7 +126,7 @@ public class MutualGameFragment extends AbstractGameFragment {
                                     mutualRoundModel.targets.add(model);
                                 }
                                 mutualRoundModel.mutuals = new ArrayList<>();
-                                for (UserEntity userEntity : mutualList) {
+                                for (UserEntity userEntity : commonFriends) {
                                     VariantModel model = new VariantModel();
                                     model.title = userEntity.firstName + " " + userEntity.lastName;
                                     model.id = userEntity.id;
@@ -158,12 +166,42 @@ public class MutualGameFragment extends AbstractGameFragment {
         MutualRoundModel mutualRoundModel = (MutualRoundModel) roundModel;
         mutual1TextView.setText(mutualRoundModel.targets.get(0).title);
         mutual2TextView.setText(mutualRoundModel.targets.get(1).title);
-        Log.d("@@@@", mutualRoundModel.targets.get(0).id + " " + mutualRoundModel.targets.get(1).id);
-        for (VariantModel mutual : mutualRoundModel.mutuals) {
-            Log.d("@@@@", mutual.title);
-        }
         boolean haveMutuals = mutualRoundModel.mutuals.size() > 1;
         variantYesButton.setTag(haveMutuals);
         variantNoButton.setTag(!haveMutuals);
+        adapter.setUserEntities(mutualRoundModel.mutuals);
+    }
+
+    private class CommonFriendsAdapter extends BaseAdapter {
+
+        List<VariantModel> userEntities;
+
+        public void setUserEntities(List<VariantModel> userEntities) {
+            this.userEntities = userEntities;
+            notifyDataSetChanged();
+        }
+
+        @Override
+        public int getCount() {
+            return userEntities == null ? 0 : userEntities.size();
+        }
+
+        @Override
+        public VariantModel getItem(int position) {
+            return userEntities.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return 0;
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView textView = new TextView(parent.getContext());
+            VariantModel user = getItem(position);
+            textView.setText(user.title);
+            return textView;
+        }
     }
 }
