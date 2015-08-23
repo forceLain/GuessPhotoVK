@@ -23,4 +23,10 @@
         android:layout_height="wrap_content"
         android:text="@string/mutual_mode"/>
 
+    <Button
+        android:id="@+id/button_are_friends_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/are_friends"/>
+
 </LinearLayout>

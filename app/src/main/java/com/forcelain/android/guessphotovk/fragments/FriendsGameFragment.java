@@ -26,7 +26,7 @@ public class FriendsGameFragment extends AbstractPhotoGameFragment {
 
     @Override
     protected void prepareRound() {
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
+        new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
                 .map(new Func1<List<UserEntity>, List<UserEntity>>() {
                     @Override
                     public List<UserEntity> call(List<UserEntity> friendList) {

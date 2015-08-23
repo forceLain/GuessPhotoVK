@@ -16,7 +16,6 @@ import android.widget.TextView;
 import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.api.Api;
 import com.forcelain.android.guessphotovk.api.UserEntity;
-import com.forcelain.android.guessphotovk.model.AbstractRoundModel;
 import com.forcelain.android.guessphotovk.model.MutualRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.vk.sdk.VKAccessToken;
@@ -41,8 +40,8 @@ public class MutualGameFragment extends AbstractGameFragment {
     @Bind(R.id.list) ListView commonFriendsList;
     @Bind(R.id.mutual_container) View mutualContainer;
     @Bind(R.id.variants_container) View variantsContainer;
-    @Bind(R.id.text_mutual_1) TextView mutual1TextView;
-    @Bind(R.id.text_mutual_2) TextView mutual2TextView;
+    @Bind(R.id.text_variant_1) TextView mutual1TextView;
+    @Bind(R.id.text_variant_2) TextView mutual2TextView;
     @Bind(R.id.variant_yes) Button variantYesButton;
     @Bind(R.id.variant_no) Button variantNoButton;
     private CommonFriendsAdapter adapter;
@@ -84,7 +83,7 @@ public class MutualGameFragment extends AbstractGameFragment {
     @Override
     protected void prepareRound() {
 
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends()
+        new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
                 .map(new Func1<List<UserEntity>, List<UserEntity>>() {
                     @Override
                     public List<UserEntity> call(List<UserEntity> friendList) {
@@ -161,9 +160,7 @@ public class MutualGameFragment extends AbstractGameFragment {
                 });
     }
 
-    @Override
-    protected void onRoundReady(AbstractRoundModel roundModel) {
-        MutualRoundModel mutualRoundModel = (MutualRoundModel) roundModel;
+    protected void onRoundReady(MutualRoundModel mutualRoundModel) {
         mutual1TextView.setText(mutualRoundModel.targets.get(0).title);
         mutual2TextView.setText(mutualRoundModel.targets.get(1).title);
         boolean haveMutuals = mutualRoundModel.mutuals.size() > 1;

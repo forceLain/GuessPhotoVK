@@ -3,9 +3,6 @@ package com.forcelain.android.guessphotovk.fragments;
 
 import android.support.v4.app.Fragment;
 
-import com.forcelain.android.guessphotovk.model.AbstractRoundModel;
-import com.forcelain.android.guessphotovk.model.RoundModel;
-
 public abstract class AbstractGameFragment extends Fragment {
 
     protected static final String TAG = "GameFragment";
@@ -19,5 +16,4 @@ public abstract class AbstractGameFragment extends Fragment {
 
     protected abstract void onRoundPreparing();
     protected abstract void prepareRound();
-    protected abstract void onRoundReady(final AbstractRoundModel roundModel);
 }

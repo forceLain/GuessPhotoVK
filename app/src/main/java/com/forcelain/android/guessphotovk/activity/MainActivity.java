@@ -46,6 +46,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @OnClick(R.id.button_are_friends_mode)
+    void startAreFriendsMode(){
+        Intent intent = new Intent(this, GameActivity.class);
+        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_ARE_FRIENDS);
+        startActivity(intent);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();

@@ -152,13 +152,13 @@ public class Api {
         return result;
     }
 
-    public Observable<List<UserEntity>> getAllFriends(){
+    public Observable<List<UserEntity>> getAllFriends(final Integer userId){
         return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
             @Override
             public void call(Subscriber<? super List<UserEntity>> subscriber) {
                 List<UserEntity> allFriends;
                 try {
-                    allFriends = getFriends();
+                    allFriends = getFriends(userId);
                     subscriber.onNext(allFriends);
                 } catch (ApiException e){
                     subscriber.onError(e);
@@ -198,15 +198,19 @@ public class Api {
         });
     }
 
-    private List<UserEntity> getFriends(){
+    private List<UserEntity> getFriends(Integer userId){
 
         List<UserEntity> result;
 
-        String url = getDefaultUriBuilder()
+        Uri.Builder builder = getDefaultUriBuilder()
                 .appendPath("friends.get")
-                .appendQueryParameter("fields", "nickname")
-                .build().toString();
+                .appendQueryParameter("fields", "nickname");
 
+        if (userId != null){
+            builder.appendQueryParameter("user_id", userId.toString());
+        }
+
+        String url = builder.build().toString();
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()

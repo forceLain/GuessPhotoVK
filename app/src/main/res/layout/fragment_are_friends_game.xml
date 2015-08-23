@@ -8,7 +8,7 @@
         android:layout_height="wrap_content"/>
 
     <LinearLayout
-        android:id="@+id/mutual_container"
+        android:id="@+id/question_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/button_go"
@@ -33,7 +33,7 @@
         android:id="@+id/variants_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/mutual_container"
+        android:layout_below="@id/question_container"
         android:gravity="center"
         android:orientation="horizontal">
 
@@ -52,12 +52,5 @@
             android:text="@string/no"/>
 
     </LinearLayout>
-
-    <ListView
-        android:id="@+id/list"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/variants_container"/>
-
 
 </RelativeLayout>

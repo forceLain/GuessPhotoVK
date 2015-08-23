@@ -14,4 +14,5 @@ public class UserEntity {
     public String lastName;
 
     public List<PhotoEntity> photoList;
+    public List<Integer> friendList;
 }
