@@ -168,6 +168,50 @@ public class Api {
         });
     }
 
+    public Observable<List<SongEntity>> getAllSongs(final int userId){
+        return Observable.create(new Observable.OnSubscribe<List<SongEntity>>() {
+            @Override
+            public void call(Subscriber<? super List<SongEntity>> subscriber) {
+                List<SongEntity> allSongs;
+                try {
+                    allSongs = getSongs(userId);
+                    subscriber.onNext(allSongs);
+                } catch (ApiException e){
+                    subscriber.onError(e);
+                }
+                subscriber.onCompleted();
+            }
+        });
+    }
+
+    private List<SongEntity> getSongs(int userId) {
+        List<SongEntity> result;
+
+        String url = getDefaultUriBuilder()
+                .appendPath("audio.get")
+                .appendQueryParameter("owner_id", String.valueOf(userId))
+                .appendQueryParameter("need_user", "0")
+                .appendQueryParameter("count", "1000")
+                .build().toString();
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        try {
+            Response response = client.newCall(request).execute();
+            Type type = new TypeToken<ApiResponse<SongsResponse>>(){}.getType();
+            ApiResponse<SongsResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
+            if (apiResponse.error != null){
+                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+            }
+            result = apiResponse.response.items;
+        } catch (IOException|JsonParseException e) {
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected friend response");
+        }
+        return result;
+    }
+
     public Observable<UserEntity> getUserAllPhotos(final UserEntity userEntity){
         return Observable.create(new Observable.OnSubscribe<UserEntity>() {
             @Override

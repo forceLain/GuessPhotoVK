@@ -29,4 +29,10 @@
         android:layout_height="wrap_content"
         android:text="@string/are_friends"/>
 
+    <Button
+        android:id="@+id/button_song_mode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/whose_song"/>
+
 </LinearLayout>

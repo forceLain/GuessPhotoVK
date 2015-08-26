@@ -53,6 +53,13 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @OnClick(R.id.button_song_mode)
+    void startSongMode(){
+        Intent intent = new Intent(this, GameActivity.class);
+        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_SONG);
+        startActivity(intent);
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -80,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void login() {
-        VKSdk.login(this, "friends", "photos");
+        VKSdk.login(this, "friends", "photos", "audio");
     }
 
     @Override

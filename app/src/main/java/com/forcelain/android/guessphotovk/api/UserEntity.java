@@ -15,4 +15,5 @@ public class UserEntity {
 
     public List<PhotoEntity> photoList;
     public List<Integer> friendList;
+    public List<SongEntity> songList;
 }
