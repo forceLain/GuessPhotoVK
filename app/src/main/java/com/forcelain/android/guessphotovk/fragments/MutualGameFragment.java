@@ -4,6 +4,7 @@ package com.forcelain.android.guessphotovk.fragments;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,14 +16,16 @@ import android.widget.TextView;
 
 import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.api.Api;
+import com.forcelain.android.guessphotovk.api.ApiException;
 import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.MutualRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
+import com.forcelain.android.guessphotovk.rx.RandomPairFunc;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
@@ -62,12 +65,12 @@ public class MutualGameFragment extends AbstractGameFragment {
     }
 
     @OnClick(R.id.button_go)
-    void onGoClicked(){
+    void onGoClicked() {
         newRound();
     }
 
     @OnClick({R.id.variant_yes, R.id.variant_no})
-    void onVariantClicked(Button button){
+    void onVariantClicked(Button button) {
         Boolean correct = (Boolean) button.getTag();
         button.setTextColor(correct ? Color.GREEN : Color.RED);
         commonFriendsList.setVisibility(View.VISIBLE);
@@ -84,28 +87,13 @@ public class MutualGameFragment extends AbstractGameFragment {
     protected void makeRound() {
 
         new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
-                .map(new Func1<List<UserEntity>, List<UserEntity>>() {
+                .map(new RandomPairFunc<UserEntity>())
+                .flatMap(new Func1<Pair<UserEntity, UserEntity>, Observable<MutualRoundModel>>() {
                     @Override
-                    public List<UserEntity> call(List<UserEntity> friendList) {
-                        List<UserEntity> shuffledFriendList = new ArrayList<>(friendList);
-                        Collections.shuffle(shuffledFriendList);
-                        return shuffledFriendList;
-                    }
-                })
-                .flatMap(new Func1<List<UserEntity>, Observable<UserEntity>>() {
-                    @Override
-                    public Observable<UserEntity> call(List<UserEntity> friendList) {
-                        return Observable.from(friendList);
-                    }
-                })
-                .take(2)
-                .buffer(2)
-                .flatMap(new Func1<List<UserEntity>, Observable<MutualRoundModel>>() {
-                    @Override
-                    public Observable<MutualRoundModel> call(List<UserEntity> userEntities) {
-                        Observable<List<UserEntity>> randomGuysObs = Observable.just(userEntities);
+                    public Observable<MutualRoundModel> call(Pair<UserEntity, UserEntity> randomGuys) {
+                        Observable<Pair<UserEntity, UserEntity>> randomGuysObs = Observable.just(randomGuys);
 
-                        Observable<List<UserEntity>> commonFriendsObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(userEntities.get(0).id, userEntities.get(1).id)
+                        Observable<List<UserEntity>> commonFriendsObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(randomGuys.first.id, randomGuys.second.id)
                                 .flatMap(new Func1<List<Integer>, Observable<List<UserEntity>>>() {
                                     @Override
                                     public Observable<List<UserEntity>> call(List<Integer> integers) {
@@ -113,20 +101,25 @@ public class MutualGameFragment extends AbstractGameFragment {
                                     }
                                 });
 
-                        return Observable.zip(commonFriendsObs, randomGuysObs, new Func2<List<UserEntity>, List<UserEntity>, MutualRoundModel>() {
+                        return Observable.zip(randomGuysObs, commonFriendsObs, new Func2<Pair<UserEntity, UserEntity>, List<UserEntity>, MutualRoundModel>() {
                             @Override
-                            public MutualRoundModel call(List<UserEntity> commonFriends, List<UserEntity> randomGuys) {
+                            public MutualRoundModel call(Pair<UserEntity, UserEntity> randomGuys, List<UserEntity> commonFriends) {
                                 MutualRoundModel mutualRoundModel = new MutualRoundModel();
                                 mutualRoundModel.targets = new ArrayList<>();
-                                for (UserEntity userEntity : randomGuys) {
-                                    VariantModel model = new VariantModel();
-                                    model.title = userEntity.firstName + " " + userEntity.lastName;
-                                    model.id = userEntity.id;
-                                    mutualRoundModel.targets.add(model);
-                                }
+
+                                VariantModel model = new VariantModel();
+                                model.title = randomGuys.first.firstName + " " + randomGuys.first.lastName;
+                                model.id = randomGuys.first.id;
+                                mutualRoundModel.targets.add(model);
+
+                                model = new VariantModel();
+                                model.title = randomGuys.second.firstName + " " + randomGuys.second.lastName;
+                                model.id = randomGuys.second.id;
+                                mutualRoundModel.targets.add(model);
+
                                 mutualRoundModel.mutuals = new ArrayList<>();
                                 for (UserEntity userEntity : commonFriends) {
-                                    VariantModel model = new VariantModel();
+                                    model = new VariantModel();
                                     model.title = userEntity.firstName + " " + userEntity.lastName;
                                     model.id = userEntity.id;
                                     mutualRoundModel.mutuals.add(model);
@@ -136,21 +129,23 @@ public class MutualGameFragment extends AbstractGameFragment {
                         });
                     }
                 })
-                .timeout(30, TimeUnit.SECONDS)
+                .retry(new Func2<Integer, Throwable, Boolean>() {
+                    @Override
+                    public Boolean call(Integer integer, Throwable throwable) {
+                        return throwable instanceof ApiException;
+                    }
+                })
+                .timeout(NEW_ROUND_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<MutualRoundModel>() {
 
                     @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                        //TODO Check if no onNext was called
-                    }
+                    public void onCompleted() {}
 
                     @Override
                     public void onError(Throwable e) {
                         Log.e(TAG, Log.getStackTraceString(e));
-                        //TODO show error fragment
                     }
 
                     @Override

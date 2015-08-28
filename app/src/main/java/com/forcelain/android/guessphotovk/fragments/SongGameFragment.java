@@ -18,10 +18,11 @@ import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.SongRoundModel;
 import com.forcelain.android.guessphotovk.model.SongVariantModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
+import com.forcelain.android.guessphotovk.rx.ListSerializerFunc;
+import com.forcelain.android.guessphotovk.rx.ShuffleFunc;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -106,20 +107,8 @@ public class SongGameFragment extends AbstractGameFragment {
     protected void makeRound() {
 
         new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
-                .map(new Func1<List<UserEntity>, List<UserEntity>>() {
-                    @Override
-                    public List<UserEntity> call(List<UserEntity> friendList) {
-                        List<UserEntity> shuffledFriendList = new ArrayList<>(friendList);
-                        Collections.shuffle(shuffledFriendList);
-                        return shuffledFriendList;
-                    }
-                })
-                .flatMap(new Func1<List<UserEntity>, Observable<UserEntity>>() {
-                    @Override
-                    public Observable<UserEntity> call(List<UserEntity> friendList) {
-                        return Observable.from(friendList);
-                    }
-                })
+                .map(new ShuffleFunc<UserEntity>())
+                .flatMap(new ListSerializerFunc<UserEntity>())
                 .concatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
@@ -165,21 +154,17 @@ public class SongGameFragment extends AbstractGameFragment {
                         return roundModel;
                     }
                 })
-                .timeout(30, TimeUnit.SECONDS)
+                .timeout(NEW_ROUND_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<SongRoundModel>() {
 
                     @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                        //TODO Check if no onNext was called
-                    }
+                    public void onCompleted() {}
 
                     @Override
                     public void onError(Throwable e) {
                         Log.e(TAG, Log.getStackTraceString(e));
-                        //TODO show error fragment
                     }
 
                     @Override

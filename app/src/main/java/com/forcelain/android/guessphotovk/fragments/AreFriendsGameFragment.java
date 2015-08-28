@@ -16,6 +16,8 @@ import com.forcelain.android.guessphotovk.api.Api;
 import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.AreFriendsRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
+import com.forcelain.android.guessphotovk.rx.ListSerializerFunc;
+import com.forcelain.android.guessphotovk.rx.ShuffleFunc;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
@@ -76,33 +78,14 @@ public class AreFriendsGameFragment extends AbstractGameFragment {
     protected void makeRound() {
 
         new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
-                .map(new Func1<List<UserEntity>, List<UserEntity>>() {
-                    @Override
-                    public List<UserEntity> call(List<UserEntity> friendList) {
-                        List<UserEntity> shuffledFriendList = new ArrayList<>(friendList);
-                        Collections.shuffle(shuffledFriendList);
-                        return shuffledFriendList;
-                    }
-                })
-                .flatMap(new Func1<List<UserEntity>, Observable<UserEntity>>() {
-                    @Override
-                    public Observable<UserEntity> call(List<UserEntity> friendList) {
-                        return Observable.from(friendList);
-                    }
-                })
-                .take(2)
-                .buffer(2)
-                .flatMap(new Func1<List<UserEntity>, Observable<UserEntity>>() {
-                    @Override
-                    public Observable<UserEntity> call(List<UserEntity> list) {
-                        return Observable.from(list);
-                    }
-                })
+                .map(new ShuffleFunc<UserEntity>())
+                .flatMap(new ListSerializerFunc<UserEntity>())
                 .flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
                         Observable<UserEntity> singleUserObs = Observable.just(userEntity);
-                        Observable<List<UserEntity>> friendsObs = new Api(VKAccessToken.currentToken().accessToken).getAllFriends(userEntity.id);
+                        Observable<List<UserEntity>> friendsObs = new Api(VKAccessToken.currentToken().accessToken).getAllFriends(userEntity.id)
+                                .onErrorResumeNext(Observable.just(new ArrayList<UserEntity>()));
                         return Observable.zip(singleUserObs, friendsObs, new Func2<UserEntity, List<UserEntity>, UserEntity>() {
                             @Override
                             public UserEntity call(UserEntity userEntity, List<UserEntity> list) {
@@ -115,6 +98,13 @@ public class AreFriendsGameFragment extends AbstractGameFragment {
                         });
                     }
                 })
+                .filter(new Func1<UserEntity, Boolean>() {
+                    @Override
+                    public Boolean call(UserEntity userEntity) {
+                        return userEntity.friendList != null && !userEntity.friendList.isEmpty();
+                    }
+                })
+                .take(2)
                 .buffer(2)
                 .map(new Func1<List<UserEntity>, AreFriendsRoundModel>() {
                     @Override
@@ -133,21 +123,17 @@ public class AreFriendsGameFragment extends AbstractGameFragment {
                         return roundModel;
                     }
                 })
-                .timeout(30, TimeUnit.SECONDS)
+                .timeout(NEW_ROUND_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<AreFriendsRoundModel>() {
 
                     @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                        //TODO Check if no onNext was called
-                    }
+                    public void onCompleted() { }
 
                     @Override
                     public void onError(Throwable e) {
                         Log.e(TAG, Log.getStackTraceString(e));
-                        //TODO show error fragment
                     }
 
                     @Override
