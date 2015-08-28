@@ -16,13 +16,13 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <TextView
+        <Button
             android:id="@+id/text_variant_1"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"/>
 
-        <TextView
+        <Button
             android:id="@+id/text_variant_2"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -36,13 +36,13 @@
         android:gravity="center"
         android:orientation="horizontal">
 
-        <TextView
+        <Button
             android:id="@+id/text_variant_3"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"/>
 
-        <TextView
+        <Button
             android:id="@+id/text_variant_4"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
