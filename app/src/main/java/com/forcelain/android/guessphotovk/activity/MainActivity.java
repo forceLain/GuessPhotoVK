@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 
 import com.forcelain.android.guessphotovk.R;
 import com.vk.sdk.VKAccessToken;
@@ -25,38 +26,27 @@ public class MainActivity extends AppCompatActivity {
         VKSdk.initialize(this);
     }
 
-    @OnClick(R.id.button_friend_mode)
-      void startFriendsMode(){
+    @OnClick({R.id.button_friend_mode, R.id.button_groups_mode, R.id.button_mutual_mode,
+            R.id.button_are_friends_mode, R.id.button_song_mode})
+    void onGameModeClicked(View view){
         Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_FRIENDS);
-        startActivity(intent);
-    }
-
-    @OnClick(R.id.button_groups_mode)
-    void startGroupsMode(){
-        Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_GROUPS);
-        startActivity(intent);
-    }
-
-    @OnClick(R.id.button_mutual_mode)
-    void startMutualMode(){
-        Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_MUTUAL);
-        startActivity(intent);
-    }
-
-    @OnClick(R.id.button_are_friends_mode)
-    void startAreFriendsMode(){
-        Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_ARE_FRIENDS);
-        startActivity(intent);
-    }
-
-    @OnClick(R.id.button_song_mode)
-    void startSongMode(){
-        Intent intent = new Intent(this, GameActivity.class);
-        intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_SONG);
+        switch (view.getId()){
+            case R.id.button_friend_mode:
+                intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_FRIENDS);
+                break;
+            case R.id.button_groups_mode:
+                intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_GROUPS);
+                break;
+            case R.id.button_mutual_mode:
+                intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_MUTUAL);
+                break;
+            case R.id.button_are_friends_mode:
+                intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_ARE_FRIENDS);
+                break;
+            case R.id.button_song_mode:
+                intent.putExtra(GameActivity.EXTRA_MODE, GameActivity.MODE_SONG);
+                break;
+        }
         startActivity(intent);
     }
 
