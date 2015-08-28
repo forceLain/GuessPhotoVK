@@ -23,7 +23,6 @@ import butterknife.OnClick;
 
 public abstract class AbstractPhotoGameFragment extends AbstractGameFragment {
 
-    private static final long NEW_ROUND_DELAY_MS = 1000;
     @Bind(R.id.image_photo) ImageView photoView;
     @Bind({R.id.buttons_1_2, R.id.buttons_3_4}) List<View> buttonBars;
     @Bind({R.id.button_var1, R.id.button_var2, R.id.button_var3, R.id.button_var4}) List<Button> variantsButton;

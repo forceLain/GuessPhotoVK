@@ -1,13 +1,13 @@
 package com.forcelain.android.guessphotovk.fragments;
 
 
-import android.util.Log;
-
 import com.forcelain.android.guessphotovk.api.Api;
 import com.forcelain.android.guessphotovk.api.PhotoEntity;
 import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.RoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
+import com.forcelain.android.guessphotovk.rx.ListSerializerFunc;
+import com.forcelain.android.guessphotovk.rx.ShuffleFunc;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
@@ -20,32 +20,35 @@ import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 
-public class FriendsGameFragment extends AbstractPhotoGameFragment {
+public class FriendsPhotoGameFragment extends AbstractPhotoGameFragment {
 
     @Override
-    protected void prepareRound() {
+    protected void makeRound() {
         new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
-                .map(new Func1<List<UserEntity>, List<UserEntity>>() {
-                    @Override
-                    public List<UserEntity> call(List<UserEntity> friendList) {
-                        List<UserEntity> shuffledFriendList = new ArrayList<>(friendList);
-                        Collections.shuffle(shuffledFriendList);
-                        return shuffledFriendList;
-                    }
-                })
-                .flatMap(new Func1<List<UserEntity>, Observable<UserEntity>>() {
-                    @Override
-                    public Observable<UserEntity> call(List<UserEntity> friendList) {
-                        return Observable.from(friendList);
-                    }
-                })
+                .map(new ShuffleFunc<UserEntity>())
+                .flatMap(new ListSerializerFunc<UserEntity>())
                 .flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
-                        return new Api(VKAccessToken.currentToken().accessToken).getUserAllPhotos(userEntity)
-                                .onErrorResumeNext(Observable.just(userEntity));
+                        Observable<UserEntity> userObs = Observable.just(userEntity);
+                        Observable<List<PhotoEntity>> userPhotosObs = new Api(VKAccessToken.currentToken().accessToken).getPhotos(userEntity.id)
+                                .onErrorResumeNext(Observable.just(new ArrayList<PhotoEntity>()));
+                        return Observable.zip(userObs, userPhotosObs, new Func2<UserEntity, List<PhotoEntity>, UserEntity>() {
+                            @Override
+                            public UserEntity call(UserEntity userEntity, List<PhotoEntity> photoEntities) {
+                                userEntity.photoList = photoEntities;
+                                return userEntity;
+                            }
+                        });
+                    }
+                })
+                .filter(new Func1<UserEntity, Boolean>() {
+                    @Override
+                    public Boolean call(UserEntity userEntity) {
+                        return userEntity.photoList != null && !userEntity.photoList.isEmpty();
                     }
                 })
                 .map(new Func1<UserEntity, VariantModel>() {
@@ -63,12 +66,6 @@ public class FriendsGameFragment extends AbstractPhotoGameFragment {
                         return variantModel;
                     }
                 })
-                .filter(new Func1<VariantModel, Boolean>() {
-                    @Override
-                    public Boolean call(VariantModel variantModel) {
-                        return variantModel.photoSrc != null;
-                    }
-                })
                 .take(4)
                 .buffer(4)
                 .map(new Func1<List<VariantModel>, RoundModel>() {
@@ -81,22 +78,16 @@ public class FriendsGameFragment extends AbstractPhotoGameFragment {
                         return roundModel;
                     }
                 })
-                .timeout(30, TimeUnit.SECONDS)
+                .timeout(NEW_ROUND_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Subscriber<RoundModel>() {
 
                     @Override
-                    public void onCompleted() {
-                        Log.d(TAG, "onCompleted");
-                        //TODO Check if no onNext was called
-                    }
+                    public void onCompleted() { }
 
                     @Override
-                    public void onError(Throwable e) {
-                        Log.e(TAG, Log.getStackTraceString(e));
-                        //TODO show error fragment
-                    }
+                    public void onError(Throwable e) { }
 
                     @Override
                     public void onNext(RoundModel roundModel) {

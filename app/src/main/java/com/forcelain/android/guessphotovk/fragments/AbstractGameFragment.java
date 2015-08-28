@@ -8,12 +8,13 @@ public abstract class AbstractGameFragment extends Fragment {
     protected static final String TAG = "GameFragment";
 
     protected static final long NEW_ROUND_DELAY_MS = 1000;
+    protected static final long NEW_ROUND_TIMEOUT_SEC = 30;
 
     protected void newRound() {
         onRoundPreparing();
-        prepareRound();
+        makeRound();
     }
 
     protected abstract void onRoundPreparing();
-    protected abstract void prepareRound();
+    protected abstract void makeRound();
 }

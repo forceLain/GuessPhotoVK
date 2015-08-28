@@ -81,7 +81,7 @@ public class MutualGameFragment extends AbstractGameFragment {
     }
 
     @Override
-    protected void prepareRound() {
+    protected void makeRound() {
 
         new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
                 .map(new Func1<List<UserEntity>, List<UserEntity>>() {

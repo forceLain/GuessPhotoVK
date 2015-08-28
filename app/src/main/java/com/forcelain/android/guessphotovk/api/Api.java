@@ -212,28 +212,13 @@ public class Api {
         return result;
     }
 
-    public Observable<UserEntity> getUserAllPhotos(final UserEntity userEntity){
-        return Observable.create(new Observable.OnSubscribe<UserEntity>() {
+    public Observable<List<PhotoEntity>> getPhotos(final int userId){
+        return Observable.create(new Observable.OnSubscribe<List<PhotoEntity>>() {
             @Override
-            public void call(Subscriber<? super UserEntity> subscriber) {
+            public void call(Subscriber<? super List<PhotoEntity>> subscriber) {
                 try {
-                    userEntity.photoList = getPhotoList(userEntity.id);
-                    subscriber.onNext(userEntity);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
-
-    public Observable<GroupEntity> getGroupAllPhotos(final GroupEntity groupEntity) {
-        return Observable.create(new Observable.OnSubscribe<GroupEntity>() {
-            @Override
-            public void call(Subscriber<? super GroupEntity> subscriber) {
-                try {
-                    groupEntity.photoList = getPhotoList(-groupEntity.id);
-                    subscriber.onNext(groupEntity);
+                    List<PhotoEntity> photoList = getPhotoList(userId);
+                    subscriber.onNext(photoList);
                 } catch (ApiException e){
                     subscriber.onError(e);
                 }

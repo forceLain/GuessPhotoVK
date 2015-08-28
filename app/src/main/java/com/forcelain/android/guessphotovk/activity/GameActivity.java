@@ -6,8 +6,8 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.forcelain.android.guessphotovk.R;
 import com.forcelain.android.guessphotovk.fragments.AreFriendsGameFragment;
-import com.forcelain.android.guessphotovk.fragments.FriendsGameFragment;
-import com.forcelain.android.guessphotovk.fragments.GroupsGameFragment;
+import com.forcelain.android.guessphotovk.fragments.FriendsPhotoGameFragment;
+import com.forcelain.android.guessphotovk.fragments.GroupsPhotoGameFragment;
 import com.forcelain.android.guessphotovk.fragments.MutualGameFragment;
 import com.forcelain.android.guessphotovk.fragments.SongGameFragment;
 
@@ -41,10 +41,10 @@ public class GameActivity extends AppCompatActivity {
     private void onFirstCreate() {
         switch (mode){
             case MODE_FRIENDS:
-                replaceFragment(new FriendsGameFragment());
+                replaceFragment(new FriendsPhotoGameFragment());
                 break;
             case MODE_GROUPS:
-                replaceFragment(new GroupsGameFragment());
+                replaceFragment(new GroupsPhotoGameFragment());
                 break;
             case MODE_MUTUAL:
                 replaceFragment(new MutualGameFragment());
