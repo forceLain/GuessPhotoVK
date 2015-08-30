@@ -21,11 +21,11 @@ import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.MutualRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.forcelain.android.guessphotovk.rx.RandomPairFunc;
+import com.forcelain.android.guessphotovk.rx.RxApi;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
@@ -86,18 +86,18 @@ public class MutualGameFragment extends AbstractGameFragment {
     @Override
     protected void makeRound() {
 
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
+        new RxApi(new Api(VKAccessToken.currentToken().accessToken)).getFriends(null)
                 .map(new RandomPairFunc<UserEntity>())
                 .flatMap(new Func1<Pair<UserEntity, UserEntity>, Observable<MutualRoundModel>>() {
                     @Override
                     public Observable<MutualRoundModel> call(Pair<UserEntity, UserEntity> randomGuys) {
                         Observable<Pair<UserEntity, UserEntity>> randomGuysObs = Observable.just(randomGuys);
 
-                        Observable<List<UserEntity>> commonFriendsObs = new Api(VKAccessToken.currentToken().accessToken).getMutual(randomGuys.first.id, randomGuys.second.id)
+                        Observable<List<UserEntity>> commonFriendsObs = new RxApi(new Api(VKAccessToken.currentToken().accessToken)).getCommonFriends(randomGuys.first.id, randomGuys.second.id)
                                 .flatMap(new Func1<List<Integer>, Observable<List<UserEntity>>>() {
                                     @Override
                                     public Observable<List<UserEntity>> call(List<Integer> integers) {
-                                        return new Api(VKAccessToken.currentToken().accessToken).getUsers(integers);
+                                        return new RxApi(new Api(VKAccessToken.currentToken().accessToken)).getUsers(integers);
                                     }
                                 });
 

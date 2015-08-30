@@ -17,11 +17,11 @@ import com.forcelain.android.guessphotovk.api.UserEntity;
 import com.forcelain.android.guessphotovk.model.AreFriendsRoundModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.forcelain.android.guessphotovk.rx.ListSerializerFunc;
+import com.forcelain.android.guessphotovk.rx.RxApi;
 import com.forcelain.android.guessphotovk.rx.ShuffleFunc;
 import com.vk.sdk.VKAccessToken;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -77,14 +77,15 @@ public class AreFriendsGameFragment extends AbstractGameFragment {
     @Override
     protected void makeRound() {
 
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
+        final Api api = new Api(VKAccessToken.currentToken().accessToken);
+        new RxApi(api).getFriends(null)
                 .map(new ShuffleFunc<UserEntity>())
                 .flatMap(new ListSerializerFunc<UserEntity>())
                 .flatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
                         Observable<UserEntity> singleUserObs = Observable.just(userEntity);
-                        Observable<List<UserEntity>> friendsObs = new Api(VKAccessToken.currentToken().accessToken).getAllFriends(userEntity.id)
+                        Observable<List<UserEntity>> friendsObs = new RxApi(api).getFriends(userEntity.id)
                                 .onErrorResumeNext(Observable.just(new ArrayList<UserEntity>()));
                         return Observable.zip(singleUserObs, friendsObs, new Func2<UserEntity, List<UserEntity>, UserEntity>() {
                             @Override

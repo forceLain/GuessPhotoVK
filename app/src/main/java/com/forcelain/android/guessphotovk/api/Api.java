@@ -14,9 +14,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
-import rx.Observable;
-import rx.Subscriber;
-
 public class Api {
 
     private final String accessToken;
@@ -25,23 +22,8 @@ public class Api {
         this.accessToken = accessToken;
     }
 
-    public Observable<List<UserEntity>> getUsers(final Iterable<Integer> ids){
-        return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
-            @Override
-            public void call(Subscriber<? super List<UserEntity>> subscriber) {
-                List<UserEntity> userList;
-                try {
-                    userList = getUserList(ids);
-                    subscriber.onNext(userList);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
+    public List<UserEntity> getUsers(final Iterable<Integer> ids) throws IOException {
 
-    private List<UserEntity> getUserList(final Iterable<Integer> ids) {
         String url = getDefaultUriBuilder()
                 .appendPath("users.get")
                 .appendQueryParameter("user_ids", TextUtils.join(",", ids))
@@ -51,38 +33,16 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        List<UserEntity> result;
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<List<UserEntity>>>(){}.getType();
-            ApiResponse<List<UserEntity>> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
-        }
-        return result;
+
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<List<UserEntity>>>(){}.getType();
+        ApiResponse<List<UserEntity>> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response;
     }
 
-    public Observable<List<Integer>> getMutual(final int sourceId, final int targetId){
-        return Observable.create(new Observable.OnSubscribe<List<Integer>>() {
-            @Override
-            public void call(Subscriber<? super List<Integer>> subscriber) {
-                List<Integer> mutualList;
-                try {
-                    mutualList = getMutualList(sourceId, targetId);
-                    subscriber.onNext(mutualList);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
+    public List<Integer> getCommonFriends(int sourceId, int targetId) throws IOException {
 
-    private List<Integer> getMutualList(int sourceId, int targetId) {
         String url = getDefaultUriBuilder()
                 .appendPath("friends.getMutual")
                 .appendQueryParameter("source_uid", String.valueOf(sourceId))
@@ -93,39 +53,14 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        List<Integer> result;
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<List<Integer>>>(){}.getType();
-            ApiResponse<List<Integer>> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
-        }
-        return result;
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<List<Integer>>>(){}.getType();
+        ApiResponse<List<Integer>> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response;
     }
 
-    public Observable<List<GroupEntity>> getAllGroups(){
-        return Observable.create(new Observable.OnSubscribe<List<GroupEntity>>() {
-            @Override
-            public void call(Subscriber<? super List<GroupEntity>> subscriber) {
-                List<GroupEntity> allGroups;
-                try {
-                    allGroups = getGroups();
-                    subscriber.onNext(allGroups);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
-
-    private List<GroupEntity> getGroups() {
-        List<GroupEntity> result;
+    public List<GroupEntity> getGroups() throws IOException {
 
         String url = getDefaultUriBuilder()
                 .appendPath("groups.get")
@@ -138,54 +73,14 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<GroupsResponse>>(){}.getType();
-            ApiResponse<GroupsResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response.items;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
-        }
-        return result;
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<GroupsResponse>>(){}.getType();
+        ApiResponse<GroupsResponse> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response.items;
     }
 
-    public Observable<List<UserEntity>> getAllFriends(final Integer userId){
-        return Observable.create(new Observable.OnSubscribe<List<UserEntity>>() {
-            @Override
-            public void call(Subscriber<? super List<UserEntity>> subscriber) {
-                List<UserEntity> allFriends;
-                try {
-                    allFriends = getFriends(userId);
-                    subscriber.onNext(allFriends);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
-
-    public Observable<List<SongEntity>> getAllSongs(final int userId){
-        return Observable.create(new Observable.OnSubscribe<List<SongEntity>>() {
-            @Override
-            public void call(Subscriber<? super List<SongEntity>> subscriber) {
-                List<SongEntity> allSongs;
-                try {
-                    allSongs = getSongs(userId);
-                    subscriber.onNext(allSongs);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
-
-    private List<SongEntity> getSongs(int userId) {
-        List<SongEntity> result;
+    public List<SongEntity> getSongs(int userId) throws IOException {
 
         String url = getDefaultUriBuilder()
                 .appendPath("audio.get")
@@ -198,38 +93,14 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<SongsResponse>>(){}.getType();
-            ApiResponse<SongsResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response.items;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected friend response");
-        }
-        return result;
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<SongsResponse>>(){}.getType();
+        ApiResponse<SongsResponse> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response.items;
     }
 
-    public Observable<List<PhotoEntity>> getPhotos(final int userId){
-        return Observable.create(new Observable.OnSubscribe<List<PhotoEntity>>() {
-            @Override
-            public void call(Subscriber<? super List<PhotoEntity>> subscriber) {
-                try {
-                    List<PhotoEntity> photoList = getPhotoList(userId);
-                    subscriber.onNext(photoList);
-                } catch (ApiException e){
-                    subscriber.onError(e);
-                }
-                subscriber.onCompleted();
-            }
-        });
-    }
-
-    private List<UserEntity> getFriends(Integer userId){
-
-        List<UserEntity> result;
+    public List<UserEntity> getFriends(Integer userId) throws IOException {
 
         Uri.Builder builder = getDefaultUriBuilder()
                 .appendPath("friends.get")
@@ -245,22 +116,14 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<FriendsResponse>>(){}.getType();
-            ApiResponse<FriendsResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response.items;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected friend response");
-        }
-        return result;
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<FriendsResponse>>(){}.getType();
+        ApiResponse<FriendsResponse> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response.items;
     }
 
-    private List<PhotoEntity> getPhotoList(int ownerId) {
-        List<PhotoEntity> result;
+    public List<PhotoEntity> getPhotos(int ownerId) throws IOException {
 
         String url = getDefaultUriBuilder()
                 .appendPath("photos.getAll")
@@ -274,18 +137,11 @@ public class Api {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
-        try {
-            Response response = client.newCall(request).execute();
-            Type type = new TypeToken<ApiResponse<PhotoListResponse>>(){}.getType();
-            ApiResponse<PhotoListResponse> apiResponse = new Gson().fromJson(response.body().charStream(), type);
-            if (apiResponse.error != null){
-                throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
-            }
-            result = apiResponse.response.items;
-        } catch (IOException|JsonParseException e) {
-            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected photo response");
-        }
-        return result;
+
+        Response response = client.newCall(request).execute();
+        Type type = new TypeToken<ApiResponse<PhotoListResponse>>(){}.getType();
+        ApiResponse<PhotoListResponse> apiResponse = parseApiResponse(type, response);
+        return apiResponse.response.items;
     }
 
     private Uri.Builder getDefaultUriBuilder(){
@@ -295,5 +151,20 @@ public class Api {
                 .appendPath("method")
                 .appendQueryParameter("v", "5.35")
                 .appendQueryParameter("access_token", accessToken);
+    }
+
+    private <T> T parseApiResponse(Type type, Response response) throws IOException {
+        try {
+            T object = new Gson().fromJson(response.body().charStream(), type);
+            if (object instanceof ApiResponse){
+                ApiResponse apiResponse = (ApiResponse) object;
+                if (apiResponse.error != null){
+                    throw new ApiException(apiResponse.error.errorCode, apiResponse.error.errorMsg);
+                }
+            }
+            return object;
+        } catch (JsonParseException e) {
+            throw new ApiException(ApiException.ERROR_CODE_UNKNOWN, "Unexpected groups response");
+        }
     }
 }

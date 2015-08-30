@@ -19,6 +19,7 @@ import com.forcelain.android.guessphotovk.model.SongRoundModel;
 import com.forcelain.android.guessphotovk.model.SongVariantModel;
 import com.forcelain.android.guessphotovk.model.VariantModel;
 import com.forcelain.android.guessphotovk.rx.ListSerializerFunc;
+import com.forcelain.android.guessphotovk.rx.RxApi;
 import com.forcelain.android.guessphotovk.rx.ShuffleFunc;
 import com.vk.sdk.VKAccessToken;
 
@@ -106,14 +107,14 @@ public class SongGameFragment extends AbstractGameFragment {
     @Override
     protected void makeRound() {
 
-        new Api(VKAccessToken.currentToken().accessToken).getAllFriends(null)
+        new RxApi(new Api(VKAccessToken.currentToken().accessToken)).getFriends(null)
                 .map(new ShuffleFunc<UserEntity>())
                 .flatMap(new ListSerializerFunc<UserEntity>())
                 .concatMap(new Func1<UserEntity, Observable<UserEntity>>() {
                     @Override
                     public Observable<UserEntity> call(UserEntity userEntity) {
                         Observable<UserEntity> singleUserObs = Observable.just(userEntity);
-                        Observable<List<SongEntity>> songsObs = new Api(VKAccessToken.currentToken().accessToken).getAllSongs(userEntity.id)
+                        Observable<List<SongEntity>> songsObs = new RxApi(new Api(VKAccessToken.currentToken().accessToken)).getSongs(userEntity.id)
                                 .onErrorResumeNext(Observable.just(new ArrayList<SongEntity>()));
                         return Observable.zip(singleUserObs, songsObs, new Func2<UserEntity, List<SongEntity>, UserEntity>() {
                             @Override
